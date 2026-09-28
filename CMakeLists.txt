@@ -2218,9 +2218,9 @@ set(COPY_FILES
   ${CRASHDUMP_COPY_FILES}
   ${CURL_COPY_FILES}
   ${DISCORDSDK_COPY_FILES}
-  ${LIVEKIT_COPY_FILES}
   ${FFMPEG_COPY_FILES}
   ${FREETYPE_COPY_FILES}
+  ${LIVEKIT_COPY_FILES}
   ${OPUSFILE_COPY_FILES}
   ${PNG_COPY_FILES}
   ${SDL2_COPY_FILES}
@@ -3293,10 +3293,10 @@ if(CLIENT)
   target_include_directories(game-client SYSTEM PRIVATE
     # tidy-alphabetical-start
     ${DISCORDSDK_INCLUDE_DIRS}
-    ${LIVEKIT_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIRS}
     ${FREETYPE_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
+    ${LIVEKIT_INCLUDE_DIRS}
     ${OGG_INCLUDE_DIRS}
     ${OPUSFILE_INCLUDE_DIRS}
     ${OPUS_INCLUDE_DIRS}
@@ -3964,6 +3964,7 @@ set(CPACK_SOURCE_FILES
   license.txt
   memcheck.supp
   other/
+  rushie-libs/
   scripts/
   src/
   storage.cfg
