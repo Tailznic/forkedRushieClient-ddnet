@@ -157,6 +157,7 @@ option(DOWNLOAD_GTEST "Download and compile GTest" ${AUTO_DEPENDENCIES_DEFAULT})
 option(STEAM "Build the Steam release version" ON)
 option(DISCORD "Enable Discord rich presence support" OFF)
 option(DISCORD_DYNAMIC "Enable discovering Discord rich presence libraries at runtime (Linux only)" OFF)
+option(LIVEKIT "Enable LiveKit voice chat support" ON)
 option(PREFER_BUNDLED_LIBS "Prefer bundled libraries over system libraries" ${AUTO_DEPENDENCIES_DEFAULT})
 option(DEV "Don't generate stuff necessary for packaging, don't strip absolute paths from debug info, enable additional assertions" OFF)
 option(VULKAN "Enable the vulkan backend" ${AUTO_VULKAN_BACKEND})
@@ -649,6 +650,12 @@ find_package(SQLite3)
 if(DISCORD)
   find_package(DiscordSdk)
 endif()
+if(LIVEKIT AND TARGET_OS MATCHES "^(android|ios|emscripten)$")
+  set(LIVEKIT OFF) # no livekit binaries for these platforms in rushie-libs
+endif()
+if(LIVEKIT)
+  find_package(Livekit)
+endif()
 if(UNIX)
   # Use -pthread instead of -lpthread to draw dependencies other than libpthread
   set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -783,6 +790,9 @@ if(DISCORD_DYNAMIC)
   if(NOT DISCORD)
     message(SEND_ERROR "You must enable the DISCORD flag if you want to link the Discord SDK")
   endif()
+endif()
+if(LIVEKIT AND NOT(LIVEKIT_FOUND))
+  message(SEND_ERROR "You must install the LiveKit SDK to compile the ${CMAKE_PROJECT_NAME} client with LiveKit support (bundled in rushie-libs, run git submodule update --init)")
 endif()
 if((CLIENT OR TOOLS) AND NOT(PNG_FOUND))
   message(SEND_ERROR "You must install libpng to compile ${CMAKE_PROJECT_NAME}")
@@ -2208,6 +2218,7 @@ set(COPY_FILES
   ${CRASHDUMP_COPY_FILES}
   ${CURL_COPY_FILES}
   ${DISCORDSDK_COPY_FILES}
+  ${LIVEKIT_COPY_FILES}
   ${FFMPEG_COPY_FILES}
   ${FREETYPE_COPY_FILES}
   ${OPUSFILE_COPY_FILES}
@@ -2679,6 +2690,14 @@ if(DISCORD AND NOT DISCORD_DYNAMIC)
   set_target_properties(discord-shared PROPERTIES
     IMPORTED_LOCATION "${DISCORDSDK_LIBRARIES}"
     IMPORTED_IMPLIB "${DISCORDSDK_LIBRARIES}"
+  )
+endif()
+
+if(LIVEKIT)
+  add_library(livekit-shared SHARED IMPORTED)
+  set_target_properties(livekit-shared PROPERTIES
+          IMPORTED_LOCATION "${LIVEKIT_LIBRARIES}"
+          IMPORTED_IMPLIB "${LIVEKIT_LIBRARIES}"
   )
 endif()
 
@@ -3161,6 +3180,9 @@ if(CLIENT)
       list(APPEND LIBS_CLIENT ${CMAKE_DL_LIBS})
     endif()
   endif()
+  if(LIVEKIT)
+    list(APPEND LIBS_CLIENT livekit-shared)
+  endif()
 
   if(TARGET_OS STREQUAL "windows")
     set(VERSION_EXECUTABLE "${CLIENT_EXECUTABLE}")
@@ -3271,6 +3293,7 @@ if(CLIENT)
   target_include_directories(game-client SYSTEM PRIVATE
     # tidy-alphabetical-start
     ${DISCORDSDK_INCLUDE_DIRS}
+    ${LIVEKIT_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIRS}
     ${FREETYPE_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
@@ -4205,6 +4228,8 @@ if(CLIENT AND DMGBUILD_FOUND)
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/ffmpeg/${LIB_DIR}/libswscale.8.dylib ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/freetype/${LIB_DIR}/libfreetype.6.dylib ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/png/${LIB_DIR}/libpng16.16.dylib ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/rushie-libs/livekit/${LIB_DIR}/liblivekit.dylib ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/rushie-libs/livekit/${LIB_DIR}/liblivekit_ffi.dylib ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
     # tidy-alphabetical-end
     COMMAND ${CMAKE_COMMAND} -E copy ${STEAM_API_DYLIB_FOR_PACKAGE} ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/Frameworks/
     COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/darwin_strip_rpath.py ${CMAKE_OTOOL} ${CMAKE_INSTALL_NAME_TOOL} ${DMG_TMPDIR}/${CLIENT_EXECUTABLE}.app/Contents/MacOS/${CLIENT_EXECUTABLE}
