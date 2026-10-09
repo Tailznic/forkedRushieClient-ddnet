@@ -1213,6 +1213,86 @@ void CPlayers::RenderPlayer(
 		}
 	}
 
+	// RClient: hammer hit-zone aura
+	if(g_Config.m_RcHammerAura > 0 && ClientId >= 0 && !RenderGhost && GameClient()->m_Snap.m_aCharacters[ClientId].m_Active)
+	{
+		// Who to show the aura for (same modes as rc_nameplates_hook)
+		bool ShowAura = false;
+		switch(g_Config.m_RcHammerAura)
+		{
+		case 1: ShowAura = !Local && ClientId != GameClient()->m_aLocalIds[!g_Config.m_ClDummy]; break;
+		case 2: ShowAura = true; break;
+		case 3: ShowAura = Local; break;
+		case 4: ShowAura = Local || ClientId == GameClient()->m_aLocalIds[!g_Config.m_ClDummy]; break;
+		default: break;
+		}
+
+		// Interactive trigger: only show while hooked or while hooking
+		if(ShowAura && g_Config.m_RcHammerAuraTrigger == 1)
+		{
+			ShowAura = false;
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(i == ClientId || !GameClient()->m_Snap.m_aCharacters[i].m_Active)
+					continue;
+				if(GameClient()->m_Snap.m_aCharacters[i].m_Cur.m_HookedPlayer == ClientId)
+				{
+					ShowAura = true;
+					break;
+				}
+			}
+		}
+		else if(ShowAura && g_Config.m_RcHammerAuraTrigger == 2)
+		{
+			ShowAura = in_range(Player.m_HookedPlayer, 0, MAX_CLIENTS - 1);
+		}
+
+		if(ShowAura &&
+			(!g_Config.m_RcHammerAuraOnlyHammer || Player.m_Weapon == WEAPON_HAMMER) &&
+			!GameClient()->m_aClients[ClientId].m_HammerHitDisabled)
+		{
+			// Is the hammer ready to fire again? (pattern from CRechargeBars::RenderRechargeBar)
+			bool HammerReady = true;
+			CCharacter *pWorldChar = g_Config.m_ClAntiPingWeapons ? GameClient()->m_PredictedWorld.GetCharacterById(ClientId) : GameClient()->m_GameWorld.GetCharacterById(ClientId);
+			if(pWorldChar)
+			{
+				const int RechargeTime = round_truncate(pWorldChar->GetTuning(pWorldChar->GetOverriddenTuneZone())->GetWeaponFireDelay(WEAPON_HAMMER) * Client()->GameTickSpeed());
+				const int CurTick = g_Config.m_ClPredict ? Client()->PredGameTick(g_Config.m_ClDummy) : GameClient()->m_GameWorld.GameTick();
+				HammerReady = pWorldChar->GetAttackTick() + RechargeTime <= CurTick;
+			}
+
+			// Hit zone of the hammer: FindEntities(ProjStartPos, PhysicalSize * 0.5) with
+			// the target's PhysicalSize added, where ProjStartPos is offset by
+			// PhysicalSize * 0.75 into the aim direction (see CCharacter::FireWeapon)
+			const float PhysicalSize = CCharacterCore::PhysicalSize();
+			const vec2 ZoneCenter = Position + Direction * (PhysicalSize * 0.75f);
+			const float ZoneRadius = PhysicalSize * 1.5f;
+
+			// Can we actually hit someone right now?
+			bool TargetInRange = false;
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(i == ClientId || !GameClient()->m_Snap.m_aCharacters[i].m_Active)
+					continue;
+				if(GameClient()->IsOtherTeam(i) != OtherTeam)
+					continue;
+				if(distance(GameClient()->m_aClients[i].m_RenderPos, ZoneCenter) < ZoneRadius)
+				{
+					TargetInRange = true;
+					break;
+				}
+			}
+
+			const unsigned ColorValue = TargetInRange ? (HammerReady ? g_Config.m_RcHammerAuraColorReady : g_Config.m_RcHammerAuraColorCooldown) : g_Config.m_RcHammerAuraColorIdle;
+			const float StateAlpha = TargetInRange && HammerReady ? 1.0f : 0.75f;
+			Graphics()->TextureClear();
+			Graphics()->QuadsBegin();
+			Graphics()->SetColor(color_cast<ColorRGBA>(ColorHSLA(ColorValue)).WithAlpha(g_Config.m_RcHammerAuraAlpha / 100.0f * StateAlpha * Alpha));
+			Graphics()->DrawCircle(ZoneCenter.x, ZoneCenter.y, ZoneRadius, g_Config.m_RcHammerAuraQuality);
+			Graphics()->QuadsEnd();
+		}
+	}
+
 	if(g_Config.m_ClShowEmotes && !GameClient()->m_aClients[ClientId].m_EmoticonIgnore && GameClient()->m_aClients[ClientId].m_EmoticonStartTick != -1)
 	{
 		float SinceStart = (Client()->GameTick(g_Config.m_ClDummy) - GameClient()->m_aClients[ClientId].m_EmoticonStartTick) + (Client()->IntraGameTickSincePrev(g_Config.m_ClDummy) - GameClient()->m_aClients[ClientId].m_EmoticonStartFraction);

@@ -278,6 +278,7 @@ void CMenus::RenderSettingsRClientSettings(CUIRect MainView)
 			PLAYERS_TAB_EFFECTS = 0,
 			PLAYERS_TAB_AFK,
 			PLAYERS_TAB_HITBOX,
+			PLAYERS_TAB_AURA,
 			NUMBER_OF_PLAYERS_TABS
 		};
 
@@ -286,7 +287,8 @@ void CMenus::RenderSettingsRClientSettings(CUIRect MainView)
 		const char *apTabNames[NUMBER_OF_PLAYERS_TABS] = {
 			RCLocalize("Effects", "RClient"),
 			RCLocalize("AFK", "RClient"),
-			RCLocalize("Hitbox", "RClient")};
+			RCLocalize("Hitbox", "RClient"),
+			RCLocalize("Hammer Aura", "RClient")};
 		DoMenuSettingsBar(&Column, apTabNames, NUMBER_OF_PLAYERS_TABS, s_aPageTabs, s_CurPlayersCustomTab, LineSize);
 		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 		Column.HSplitTop(Margin, &Label, &Column);
@@ -297,7 +299,7 @@ void CMenus::RenderSettingsRClientSettings(CUIRect MainView)
 			Ui()->DoLabel(&Label, RCLocalize("idea from BestClient", "RClient"), Margin, TEXTALIGN_MC);
 		}
 
-		const float MBiggestTab = LineSize * 4.0f + 2.0f * 2.0f;
+		const float MBiggestTab = LineSize * 8.0f + 2.0f * 2.0f;
 		const float MCurrentY = Column.y;
 		if(s_CurPlayersCustomTab == PLAYERS_TAB_EFFECTS)
 		{
@@ -347,6 +349,32 @@ void CMenus::RenderSettingsRClientSettings(CUIRect MainView)
 			Ui()->DoScrollbarOption(&g_Config.m_RcShowHitboxQuality, &g_Config.m_RcShowHitboxQuality, &Button, RCLocalize("Quality of hitbox", "RClient"), 1, 32, &CUi::ms_LinearScrollbarScale, 0);
 			static CButtonContainer s_HitboxColor;
 			DoButton_ColorPickerAutoVMargin(&s_HitboxColor, RCLocalize("Hitbox color", "RClient"), &g_Config.m_RcShowHitboxColor, color_cast<ColorRGBA>(ColorHSLA(DefaultConfig::RcShowHitboxColor)), &Column, LineSize, true);
+		}
+		if(s_CurPlayersCustomTab == PLAYERS_TAB_AURA)
+		{
+			static std::vector<CButtonContainer> s_vButtonContainersPlayersAura = {{}, {}, {}, {}, {}};
+			DoLine_RadioMenu(Column, RCLocalize("Show hammer aura", "RClient"),
+				s_vButtonContainersPlayersAura,
+				{RCLocalize("Off", "RClient"), RCLocalize("Others", "RClient"), RCLocalize("Everyone", "RClient"), RCLocalize("Own", "RClient"), RCLocalize("Dummy", "RClient")},
+				{0, 1, 2, 3, 4},
+				g_Config.m_RcHammerAura);
+			static std::vector<CButtonContainer> s_vButtonContainersPlayersAuraTrigger = {{}, {}, {}};
+			DoLine_RadioMenu(Column, RCLocalize("Aura trigger", "RClient"),
+				s_vButtonContainersPlayersAuraTrigger,
+				{RCLocalize("Always", "RClient"), RCLocalize("When hooked", "RClient"), RCLocalize("When you hook", "RClient")},
+				{0, 1, 2},
+				g_Config.m_RcHammerAuraTrigger);
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_RcHammerAuraOnlyHammer, RCLocalize("Only with hammer", "RClient"), &g_Config.m_RcHammerAuraOnlyHammer, &Column, LineSize);
+			Column.HSplitTop(LineSize, &Button, &Column);
+			Ui()->DoScrollbarOption(&g_Config.m_RcHammerAuraQuality, &g_Config.m_RcHammerAuraQuality, &Button, RCLocalize("Aura quality", "RClient"), 4, 64, &CUi::ms_LinearScrollbarScale, 0);
+			Column.HSplitTop(LineSize, &Button, &Column);
+			Ui()->DoScrollbarOption(&g_Config.m_RcHammerAuraAlpha, &g_Config.m_RcHammerAuraAlpha, &Button, RCLocalize("Aura opacity", "RClient"), 1, 100, &CUi::ms_LinearScrollbarScale, 0);
+			static CButtonContainer s_AuraColorIdle;
+			DoButton_ColorPickerAutoVMargin(&s_AuraColorIdle, RCLocalize("Aura color (no target)", "RClient"), &g_Config.m_RcHammerAuraColorIdle, color_cast<ColorRGBA>(ColorHSLA(DefaultConfig::RcHammerAuraColorIdle)), &Column, LineSize, true);
+			static CButtonContainer s_AuraColorReady;
+			DoButton_ColorPickerAutoVMargin(&s_AuraColorReady, RCLocalize("Aura color (target in range)", "RClient"), &g_Config.m_RcHammerAuraColorReady, color_cast<ColorRGBA>(ColorHSLA(DefaultConfig::RcHammerAuraColorReady)), &Column, LineSize, true);
+			static CButtonContainer s_AuraColorCooldown;
+			DoButton_ColorPickerAutoVMargin(&s_AuraColorCooldown, RCLocalize("Aura color (cooldown)", "RClient"), &g_Config.m_RcHammerAuraColorCooldown, color_cast<ColorRGBA>(ColorHSLA(DefaultConfig::RcHammerAuraColorCooldown)), &Column, LineSize, true);
 		}
 		if(MBiggestTab > Column.y - MCurrentY)
 			Column.HSplitTop(MBiggestTab - (Column.y - MCurrentY), nullptr, &Column);

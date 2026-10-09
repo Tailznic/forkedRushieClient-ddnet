@@ -108,6 +108,16 @@ MACRO_CONFIG_INT(RcShowHitboxSize, rc_show_hitbox_size, 50, 1, 100, CFGFLAG_CLIE
 MACRO_CONFIG_INT(RcShowHitboxQuality, rc_show_hitbox_quality, 8, 1, 32, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hitbox quality(segments)")
 MACRO_CONFIG_COL(RcShowHitboxColor, rc_show_hitbox_color, 4288086271, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hitbox color")
 
+// Hammer hit-zone aura
+MACRO_CONFIG_INT(RcHammerAura, rc_hammer_aura, 0, 0, 4, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show hammer hit-zone aura (1 = other players', 2 = everyone, 3 = only your own, 4 = your and dummy)")
+MACRO_CONFIG_INT(RcHammerAuraOnlyHammer, rc_hammer_aura_only_hammer, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show hammer aura only when hammer is the active weapon")
+MACRO_CONFIG_INT(RcHammerAuraTrigger, rc_hammer_aura_trigger, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "When to show hammer aura (0 = always, 1 = when someone hooks you, 2 = when you hook someone)")
+MACRO_CONFIG_INT(RcHammerAuraQuality, rc_hammer_aura_quality, 32, 4, 64, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hammer aura circle quality (segments)")
+MACRO_CONFIG_INT(RcHammerAuraAlpha, rc_hammer_aura_alpha, 40, 1, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hammer aura opacity")
+MACRO_CONFIG_COL(RcHammerAuraColorIdle, rc_hammer_aura_color_idle, 200, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hammer aura color (no target in range)")
+MACRO_CONFIG_COL(RcHammerAuraColorReady, rc_hammer_aura_color_ready, 5621900, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hammer aura color (target in range and hammer ready)")
+MACRO_CONFIG_COL(RcHammerAuraColorCooldown, rc_hammer_aura_color_cooldown, 51340, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Hammer aura color (hammer on cooldown)")
+
 // Menus flags
 MACRO_CONFIG_INT(RcRClientSettingsTabs, rc_rclient_settings_tabs, 0, 0, 65536, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Bit flags to disable settings tabs")
 
